@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Online JSON Editor and Saving Tool</title>
+    <meta charset="utf-8">
+    <link rel="shortcut icon" href="/favicon.ico">
+    <meta name="description" content="Online JSON Editor is a web-based tool to view, edit, format, save JSON documents.">
+    <meta name="keywords" content="json, editor, formatter, online, format, parser, json editor,json online save,json save online,save json online,json online editor, json editor online, online json editor, javascript, javascript object notation, tools, tool, json tools, treeview, open source, free, json parser, json parser online, json formatter, json formatter online, online json formatter, online json parser, format json online">
+    <meta name="author" content="Manoj Kumar Saini">
+    <meta name="theme-color" content="#000000">
+    <link rel="manifest" href="/manifest.json">
+	<link href="styles/jsoneditor.min.css" rel="stylesheet" type="text/css">
+    <link href="styles/style.css" rel="stylesheet" type="text/css">
+	<script src="scripts/jsoneditor.min.js"></script>
+  
+    <style>
+    </style>
+</head>
+<body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <h1>Online JSON Editor and Saving Tool</h1>
+
+    <div class="container">
+        <section style="padding: 1rem; width: 100%;">
+            <form>
+                <div style="margin-bottom: 1em;">
+                    <!-- <label>Choose Type: </label>
+                    <select id="fileType" onchange="toggleFileType()">
+                        <option value="XLSX">Excel File</option>
+                        <option value="JSON">JSON</option>
+                    </select>
+                    <input id="fileInput" type="file" onchange="processFiles(this.files)" />
+                    <input id="btnModify" type="button" onclick="readDocument()" value="Extract"/>
+                    
+                    <input type="text" id="sheetName" name="sheetName"/>
+
+                    <input type="checkbox" id="deleteFormula" name="deleteFormula" checked=true>
+                    <label for="vehicle1"> deleteFormula</label>
+                    <button onclick="extractSheet()">extractWorkbookSheet</button>
+                    <input id="btnModify1" type="button" onclick="extractSheet()" value="extractWorkbookSheet"/>
+                  
+                   <label style="margin-left : 50px">Choose JSON File Type to Extract Input / Output Sheet </label>
+                     -->
+                </div>
+                <div style="margin-top: 1em; margin-bottom: 1em; display: flex;">
+                    <div class="ipContainer" id="ipContainer">
+                        <label>Please provide a valid JSON here: </label>
+                        <div id="jsoneditorIp"></div>
+                    </div>
+                    <div class="opContainer" id="opContainer" style="display: none;">
+                        <label>Extractor Output: </label>
+                        <button  type='button' onclick="toggleMode()"> Toggle Mode </button>
+                        <div id="jsoneditorOp"></div>
+                    </div>
+                </div>
+            </form>
+        </section>
+    </div>
+  
+  
+    <script type="text/javascript">
+    
+        var readDocument = null;
+        var processFiles = null;
+        var blankObject = {};
+        var mode = 'view';
+        var opContainer = document.getElementById("opContainer");
+        var ipContainer = document.getElementById("ipContainer");
+        var extractButton = document.getElementById("btnModify");
+        var extractSheetButton = document.getElementById("btnModify1");
+        var sheetNameInput = document.getElementById("sheetName");
+        var fileTypeSelector = document.getElementById("fileType");
+        var fileInput = document.getElementById("fileInput");
+        var jsoneditorIp = document.getElementById("jsoneditorIp");
+        var ipEditor = new JSONEditor(jsoneditorIp,  {mode: 'code'});
+        // ipContainer.style.display = "none";
+        var jsoneditorOp = document.getElementById("jsoneditorOp");
+        extractSheetButton.style.display = "none";
+        sheetNameInput.style.display = "none";
+        var options = {
+        mode: 'view'
+        };
+        var opEditor = new JSONEditor(jsoneditorOp, options);
+        var model = null;
+        var entityReference =
+        {
+            sheetName: "Sheet1",
+            rowIndex: 0,
+            columnIndex: 1
+        };
+
+        var validation =
+        {
+            "validate": "value",
+            "operator": "equals",
+            "extrainfo": {
+            "ignoreCase": true,
+            "trimWhitespace": true
+            },
+            "id": "R1.1"
+        };
+        (function (root) {  // root = global
+            "use strict";
+
+            root.extractSheet = function(){
+                const leoUtilityServiceRef = new Utility.LeoJSONUtility();
+                let deleteFormula = true;
+                 let sheet  = document.getElementById('sheetName').value;
+                //  let sheet  = "Input";
+                let openedFileData = ipEditor.getText();
+                try{
+                    openedFileData = JSON.parse(openedFileData);
+                    // model = spreadSheetExtractor.loadJson(openedFileData);
+                    // const data = model.toJson();
+                    let data = leoUtilityServiceRef.extractSheet(openedFileData, sheet, deleteFormula);
+                    opEditor.set(data);
+                    opContainer.style.display = "block";
+                }catch(e){
+                        alert("Please provide a valid JSON");
+                        return;
+                }
+            }
+            root.processFiles = function (files) {
+                var file = files[0];
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    openedFileName = file.name;
+                    openedFileData = e.target.result;
+                };
+
+                reader.readAsArrayBuffer(file);
+            }
+
+            root.toggleMode = function() {
+                //debugger;
+                if(mode==='view') {
+                    mode = 'code';
+                    opEditor.setMode('code');
+                }else {
+                    mode = 'view';
+                    opEditor.setMode('view');
+                }
+            }
+
+            root.toggleFileType = function(event){
+                var selectedValue =  fileTypeSelector.options[fileTypeSelector.selectedIndex].value;
+
+                if(selectedValue == "JSON"){
+                    ipContainer.style.display = "block";
+                    fileInput.style.display = "none";
+                    extractButton.style.display = "none";
+                    extractSheetButton.style.display = "inline-block";
+                    sheetNameInput.style.display = "inline-block";
+                }else{
+                    ipContainer.style.display = "none";
+                    fileInput.style.display = "inline-block";
+                    extractButton.style.display = "inline-block";
+                    extractSheetButton.style.display = "none";
+                    sheetNameInput.style.display = "none";
+                }
+                opContainer.style.display = "none";
+                opEditor.set(blankObject);
+                ipEditor.set(blankObject);
+            }
+
+            var openedFileName = null;
+            var openedFileData = null;
+
+            root.readDocument = function () {
+
+                var selectedValue =  fileTypeSelector.options[fileTypeSelector.selectedIndex].value;
+
+                const spreadSheetExtractor = new GridDataService();
+                const leoUtilityServiceRef = new Utility.LeoJSONUtility();
+                if(selectedValue == "XLSX"){
+                    if (openedFileName === null || openedFileData === null) {
+                    alert("You must open a file first.");
+                    return;
+                    }
+                    spreadSheetExtractor
+                        .loadExcel(openedFileData)
+                        .then((model) =>{
+                            const data = model.toJson();
+                            let leoJSONUpdateResult = leoUtilityServiceRef.mergeNames(data);
+                                                       debugger
+                            const isControlSheet = leoJSONUpdateResult['#sheets'].find((sheet) => sheet['name'] === "ControlsConfig");
+                            let finalJSON;
+                            if(isControlSheet){
+                            finalJSON = leoUtilityServiceRef.updateControlsConfig(leoJSONUpdateResult);                                                                                                            
+                           }else{
+                            finalJSON = leoJSONUpdateResult;                                                                                                                                                                                                                      
+                            }
+                           
+                            opEditor.set(finalJSON);
+                        }).catch(err => {
+                            alert(err);
+                        });
+
+                }else{
+                    openedFileData = ipEditor.getText();
+                    try{
+                        openedFileData = JSON.parse(openedFileData);
+                        model = spreadSheetExtractor.loadJson(openedFileData);
+                        const data = model.toJson();
+                        opEditor.set(data);
+                    }catch(e){
+                        alert("Please provide a valid JSON");
+                        return;
+                    }
+                }
+                opContainer.style.display = "block";
+            }
+
+
+        })(this);
+
+
+
+    </script>
+</body>
+</html>
